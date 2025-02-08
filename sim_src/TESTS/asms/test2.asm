@@ -1,0 +1,20 @@
+ADDI x0,x0,0x1
+ADDI x3,x0,0x0
+ADDI x3,x0,0x0
+ADDI x3,x0,0x0
+ADDI x3,x0,0x0
+ADDI x3,x0,0x0
+ADDI x0,x0,0x1
+ADDI x10, x0, 10
+ADDI x11, x0, 11
+ADDI x12, x0, 12
+ADDI x1,  x0, 0x100
+ADD  x20, x1, x10
+ADDI x0,x0,0x10
+ADDI x0,x0,0x20
+ADDI x0,x0,0x30
+ADDI x0,x0,0x40
+ADDI x0,x0,0x50
+ADDI x0,x0,0x60
+XOR  x0, x0, x0
+

@@ -1,0 +1,165 @@
+Co mi się nie podoba po analizie kodu:
+
+@ csu_ras_fsm(92) : jeśli jest pop_then_push, to traktowany jest jako tylko push
+@ stalowanie jest wyłączone
+@ interrupty są wyłączone 
+  @ zgadza sie , sa wylaczone na ten moment, ale jest WIP nad interrupt controllerem z mojej strony | Bartek
+@ nie ma csr
+  @ tak jak int ctrl jest WIP , prosiłbym o info (!!!) jakie CSR'y są potrzebne według Was do działania, bo na ten moment założenie jest takie, że CSR będą użytkowane tylko do int ctrl do czytania masek MIE, MTVEC, i exception'ów
+@ riscv_ex_jump_n_branches : i_call_mux_src przypisane do 0 a nie do wyjścia z forwarding unit (zawsze jest forwardowany rs1?)
+@ riscv_ex_jump_n_branches(40): BGE traktowany jest jako BLE (albo BLT jako BGT, w każdym razie coś jest nie tak)
+@ mem_adapter : rd_data jest z poprzedniego read'a, a rs2_data z aktualnego, a maska dla obu zawsze taka sama
+@ p_register(39): ras_read zawsze zapisuje do x1, nigdy do x5, a csu_ras_logic traktuje oba x1 i x5 zamiennie
+@ RAS po pierwszym call'u zawsze ma rozmiar conajmniej 1. Nigdy po returnie nie zostanie usunięta pierwsza komórka doń wpisana. (jest wartunek ras_addr > 1 przy pop, czyli dla rozmiaru 1 nie popuje nigdy)
+@ muszę jeszcze zbadać czy błędnie nie są forwardowane Rd, jeśli chiał być zapisywany do MEM (czy rd_write przy forwarding unit jest zależny od tego, czy był zapisywany z MEM czy z ALU )
+@ sprawdzić, czy da się jednocześnie włączyć rd_write (WB) i c_read (Load) w MEM
+
+Potwierdzone błędy:
+ + WB powinno nadpisać rejestr zanim zostanie odczytany w tym samym takcie [test_rd_forwarding]
+ # (nic z tym nie zrobię) skoki mogłyby być 1 takt krótsze, forwardując do PROGMEM, a nie do FETCH [test_jump]
+ + jeśli pierwzą wykonywaną instrukcją jest skok, to skok wykonywany jest na adres o 4 za mały. Naprawione poprzez wyrzucenie sygnału instr_valid w skid_buffer z enable DFF'a od pc, a dopisanie go na końcu w assign do o_pc jako multiplekser. [test_jump_pc0]
+ + STORE po prostu nie działa :shrug:. Uznaje IMM jednocześnie za offset i za source. Nie mogę przez to przetestować za dużo. Naprawione poprzez usunięcie opcji "imm" oraz "4" z multipleksera value3_c w EX (teraz jest to zawsze rs2 potencjalnie forwardowany) [test_mem]
+ + Warunek na BGE jest na odwrót [test_branch]
+ + RAS zapisuje adres do x1 1 takt za późno (jeśli pierwszą napotkaną instrukcją po returnie jest kolejny return), można chyba naprawić poprzez nadpisywanie przed odczytem, co wspomniane wyżej. [test_ras_x1]
+ + Źle był forwardowany rs2. Jeśli wartość IMM jest typu I, to nigdy nie jest forwardowany rs2, ale jeśli opcode jest typu R, to wartość imm przesyłana do forwarder'a była o wartości sztywno wpisanego 0, które odpowiada ramce I według definów. Naprawione poprzez dodanie typu IMM_R_TYPE w pkg. [test1] 
+ + [w wersji z AXI już tego błędu nie ma (jest za to inny)] Nie działa LOAD w jednej instrukcji. Trzeba najpierw wykonać load, potem cokolwiek, i potem znowu load, zeby dobrze cykle się dobrały. Nie trzeba w takiej konfiguracji przynajmniej czekać na propagację poprzedniego store'a [test_mem]
+ + LOAD wymaga odczekania jednego cyklu (np. NOOPem) zanim użyje się wynikową wartość. Do EX forwardowany jest rezultat poprzedniego wyliczenia adresu zamiast wartość odczytana z MEM [test_mem_fwd, test_mem2]
+    + dużo zmian wymagała naprawa:
+        + Dodałem możliwość flushowania bezpośrednio MEM
+        + Dodałem wejście "i_was_read" do forwarding_unit, aby nigdy nie przekazywał wyników adresów load'a jako store do rd.
+        + Pociągnąłem sygnał "source_from_mem" od forwarding_unit do hazadr_detection. Włącza się, jeśli wysąpiłaby sytuacja jak w punkcie wyżej
+        + IF, ID i EX są stallowane jeśli był "sourece_from_mem" zaraz po wyjściu z czekania na pamięć
+        + Cykl po powyrzszym jest flushowane MEM (bo inaczejz astallowana instrukcja wykonała by się 2 razy)
+    + Naprawione w sposób taki, że wydłuża czekanie na pamięć jedynie, jeśli jest to potrzebne
+ + Argumenty nieforwardowane pobierane są z decode z następnej instrukcji. NAPRAWIONE: trzeba było stallować read w REG [test_mem_fwd_sd_*]
+ + R0 się nadpisywał, tak po prostu XD. Jak nie była wartość forwardowana w EX, to była czytana z R0, który normalnie się nadpisywał xd. Naprawione poprzez zmienienie warunku enable dla reg_write [test2]
+ + Skok jest źle liczony jeśli wystąpił na kilka cykli po stallowaniu [test_jump_stall, test_jump_stall2, test_jump_stall3, test_jump_stall4] ([52] DECODE powinien być PC równy poprzedniemu PC z PROGMEM, a jest równy PC_BUF z PROGMEM). Naprawione poprzez wyrzucenie sygnału "i_valid" z enable'a DFF wewnątrz skid_buffer ("i_valid" był de facto opóźnionym o 1 takt negacją "i_stall" (!i_stall => rom_read => DFF => i_valid) )
+ ? Return Address Reguster nie jest forwardowany jeśli wykonywany jest JALR (głównie jako return). Jego wartość zawsze jest brana bezpośrednio z REGFILE'a. [test_jump_jalr]
+    ?! to można naprawić poprzez dodania nowego sygnału multipleksera z forwarding unit, ALE będzie się to kłócić z RAS. Jeśli return będzie prawidłowo przewidzany, to muszę uważać żeby RAS nie nadpisał x1, jeśli jakaś inna instrukcja w międzyczasie go nadpisze (zapewne do tego miał służyć sygnał abort)
+ + Nie jest również forwardowany rs1 przy JALR, nigdy. Już jest, dodałem mux_jalr_src do forwarding_unit [test_mem_fwd_jump]
+ + Jeśli jest BRANCH, z operandami o przeciwnym znaku, to flaga carry jest na odwrót. O tych samych znakach jest dobrze. Naprawiono dodając warunke, że jeśli są różne znaki, to zmnieniamy o_carry na to drugie (w ALU) [test_branch_diff, test_branch_pos, test_branch_neg]
+ + Jeśli jest sekwencja instrukcji (x1 = _, LD x2, _ = x1 + x2), czyli jeden operand musi być forwardowany z MEM, a drugi miusi czekać na pamięć, to przez dodatkowe opóźnienie fwd x1 jest z WB, który to jest stallowany dla read'a. Naprawiono poprzez stalowanie nie rejestrów, a jedynie adresów tych rejestrów [test_mem_fwd_from_before_wait.asm]
+
+ + RAS aktualizuje rs1 podczas tektu, w którym WriteBack byłby potencjalnie flushowany. Zepsuje się to przy predykcji. Naprawiono poprzez dodanie równoległego zapisu do "ra" i do "rd" [test_next20_ret]
+ - Poprawne przewidzenie RET powoduje, że x1 nie jest w czas aktualizowany z RAS. [test_call-chain_0x0 z hardcoded20 pmarg=44_36]
+ - ADDW jest niezaimplementowane
+
+Jednak nie błędy:
++ [jednak jest wszystko git, jestem pajacem] p_register opóźnia wynik czytania z register file'a
++ [jednak jest unused] riscv_ex_jump_n_branches : i_call_mux_src przypisane do 0 a nie do wyjścia z forwarding unit (zawsze jest forwardowany rs1?)
++ [ma to sens, odczytywany powinien być adres przedpordzeniego skoku, bo poprzedni jest już w rejestrze x1] csu_ras_fsm(103) : dlaczegoś pop_addr_c jest counterem ras, po odjęciu 2 (chyba że jest za mały, to jest 0)
+
+Todo:
+
++ przetestować RAS (x5, dokładniej timingi, pop_then_push)
++ Uładnić dalej pipeline viewer
++ zmienić znak "=" w readach
++ poprawić komentarze co do niedobrania opóźnień REG
++ ulepszyć odczytywanie wykonywanych instrukcji z procesora
++ przenieść parsowanie do innego pliku
++ dodać pseudoinstrukcję HALT (np. XOR x0, x0, x0) żeby łatwiej symlulować
++ przetestować maski w różnego rodzaju storeach
++ zmienić pipeline_export monitor na display w task'u, żeby można zmienić formatowanie
++ dodać lepszą wizualizację stallowania
++ dodać rysowanie pipelineu po stronie klienta
++ zbadać czemu factorial nie działa
++ polepszyć framework do assertów (tak żeby w ogóle działało)
++ polepszyć parsowanie wykonywanych instukcji (dodanie printowania wartości używanych rejestrów)
+    # (nie chce mi się) można dodać jeszcze lookup do pamięci
++ dodać dynamiczne tworzenie precondition'ów przy wywoływaniu symulacji
++ dodać automatycznę detekcję zadeklarowanych precondition'ów do weryfikacji
+
+# (porzucony pomysł) Napisać modyfikator do wynikowego asemblera z GCC, który będzie modyfikował prolog i epilog funkcji, pomijając RA na stosie (optymizacja RAS)
+
++ naprawić błędy w zhardcodowanym, podstawowym branch predictorze
++ ujednolicić sygnały inject i rollback, wraz z ich adresami (raczej nie można tego zrobić, bo rollback ma inny priorytet niż inject)
++ zbadać jak na maksymalne taktowanie wpływa predyktor
++ zroobić testy dla predykcji i czekania na pamięć
++ zbadać czemu po podpięciu strategy_random są inne błędy niż przy hardcoded20
++ zbadać, czemu "test_mem_fwd_jump" przechodzi dobrze dla next=random, dla innych nie (test_jump_jalr jest zawsze źle) - zła predykcja pozwala na propagacę rejestru docelowego do kolejnego decode'a skoku
++ dodać flushowanie pojedyńczej instrukcji (dla opóźnionych skoków), i tym samym poprawić compute_jump
+    ? ALBO podmienianie bezpośrednio PROGMEM PC (jak mi się będzie nudzić raczej)
+
++ zrobić skrypty do syntezy fizycznej
+    - wiele naraz
+    + rpt jako target
+    + przekierowac folder głębiej i dodac do gitignore
+    + naprawić raporty w output files zamiast moim folderze
+    - dodać parser raportów
+- sprawdzić o co chodzi z pętlą kombinacyjną
+- naprawić do końca wszystkie warningi dla symulacji (te jednorazowe)
++ coś się bardzo złego dzieje z BTB, zwraca za dużo flushniętych instrukcji (a suma innych jest taka sama) - trzeba było zamienić bezpośrednie przypisanie do struktury na definicję i assign
+
++ show_asm dla asm, nie tylko dla csrc
+
++ dodano podstawowy generator podsumowania predykcji
+    ? dodać generowanie pliku json
+    + dodać konsolidator csv
+    + dodać automatyczne generowanie w Makefile
+    ? dodać wizualizację w excelu
+    + dodać output file do summary
+    + dodać gotowe skrypty do generacji summary
+    + dodano verify w summary
+    + poprawna generacja nextlog przy braku 
+    + argumenty dla podsumowywacza
+    #? (zrezygnowano?) summary na asm
+
+- Predyktory do implementacji:
+    + BTB counter
+    + podpiąc skrypty pod btb2
+    - dodać nadpisywanie adresu w pm
+    + ID return
+        # (nie chce mi się) nie działa, poniewż trzeba czekać na RAS (nie wiem co z tym zrobić?)
+        # (nie chce mi się) forwarding
+    + No BTB prediction (ID coordinated)
+# (zrezygnowano) wystawić btb poza strategię
+- przetestować czy przypadkiem flushowane instrukcje w PM nie są podstawą do wykonania predykcji
+
+
+Błędy predyktora:
+    + jeśli predykcja ma miejsce instrukcję po wykonanym skoku, to źle się dzieje. Naprawiono przez dodania wykrywania, czy operacja była flushnięta [test_jump_pc0 (hardwired 8)]
+    + jakiś problem przy. NAPRAWIONE: dodałem flushowanie do source_from_mem. [test_mem_fwd1 (hardwired 8, po zmodyfikowaniu 20), test_next20_mem_0_wrong]
+        + jeśli predykcja wystąpiła na instrukcji LOAD (albo STORE), i skok wykonany był na niepoprawną instrukcję, to coś się buguje i się ta instrukcja wykonuje
+        + coś nie tak jest z source_from_mem, chyba ustawiany jest po przejściu przez EX_STAGE, a powinien przed (jednak jest git, tylko trzeba flush uwzględnić)
+    # (porzucony pomysł) brak synchronizacji z RAS
+    # (nikt nie zauważy) predykcja dla skoku, który jest pierwszą instrukcją, będzie liczona dla adresu 4, nie 0
+    + jeśli predykcja ma miejsce zaraz na końcu flushniętego potoku po jumpie, to priorytet bierze Inject, a powinien Jump. Zamieniłem miejscami Inject i Jump [test_jump (hardwired 20)]
+    + sprawdzić, czemu BHT działa tak mizernie
+
++ naprawiłem BTB_COUNTER, dodałem stall i sygnały key_c miały za małą szerokość
++ zmieniłem hardcoded20 na hardcoded
+
+Synteza:
+    + usunięto średniki po makrach z common_cells_pkg
+    + dodano parametr do riscv_hazard_detection i riscv_mu_status_manager
+    + wyciągnięto genvar slave_id z for'a na zewnątrz (dma_apb_ctrl_logic.sv)
+    + usunięto podwójny średnik z riscv_p_register
+    + dodano nazwy niektórych bloków generate
+    + zmieniono niektóre konkatenacje na agregate expresions
+    + dodatno 'logic' i typedef do APB_MEM_IMAGE_CH0 (też aggregate)
+        + też do apb_slave
+    + dodano makro na progmem do mul__O0.mem
+    + dodano implikowane sieci do top.sv
+        + też wyjscie o_busy
+    + dodano sygnały:
+        + o_leds do apb_tim.sv
+        + wr_mem_c do async_fifo_mem.sv
+        + o_rd_write do pipeline_stages.sv
+        + jump_c do ex_stage.sv
+        + stall_all do hazadr_detection.sv
+        + i_id_stall do cache_access_unit.sv (też do instancji)
+    + zakomentowano 
+        + riscv_su_ctrl_logic
+        + riscv_ca_stacking_unit
+        + riscv_su_arbiter
+    // + dodano atrybuty do syntezxy, żeby się syntezowało
+    + zmieniono w apb_slave inicjalizację z bezpośredniej, na nreset (rozwinięto i zmodyfikowano makro)
+    + przypomniano sobie, żeby dodać też USE_BTB_COUNTER do quartusa
+    + zmieniono wor na wire w next_addr_predictor
+    + zmierniono nreset entrisów w BTB, żeby nie używać agregatu
+
+
+
+
+Info:
+  roboczy schemat blokowy procesora: https://magma.com/d/PJoOsXQlcG

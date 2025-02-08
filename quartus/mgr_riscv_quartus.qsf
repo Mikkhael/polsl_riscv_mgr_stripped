@@ -1,0 +1,153 @@
+# -------------------------------------------------------------------------- #
+#
+# Copyright (C) 2022  Intel Corporation. All rights reserved.
+# Your use of Intel Corporation's design tools, logic functions 
+# and other software and tools, and any partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Intel Program License 
+# Subscription Agreement, the Intel Quartus Prime License Agreement,
+# the Intel FPGA IP License Agreement, or other applicable license
+# agreement, including, without limitation, that your use is for
+# the sole purpose of programming logic devices manufactured by
+# Intel and sold by Intel or its authorized distributors.  Please
+# refer to the applicable agreement for further details, at
+# https://fpgasoftware.intel.com/eula.
+#
+# -------------------------------------------------------------------------- #
+#
+# Quartus Prime
+# Version 21.1.1 Build 850 06/23/2022 SJ Lite Edition
+# Date created = 11:19:08  April 17, 2024
+#
+# -------------------------------------------------------------------------- #
+#
+# Notes:
+#
+# 1) The default values for assignments are stored in the file:
+#		mgr_riscv_quartus_assignment_defaults.qdf
+#    If this file doesn't exist, see file:
+#		assignment_defaults.qdf
+#
+# 2) Intel recommends that you do not modify this file. This
+#    file is updated automatically by the Quartus Prime software
+#    and any changes you make may be lost or overwritten.
+#
+# -------------------------------------------------------------------------- #
+
+
+set_global_assignment -name FAMILY "Cyclone V"
+set_global_assignment -name DEVICE 5CSEMA5F31C6
+set_global_assignment -name TOP_LEVEL_ENTITY top_wrapper
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 21.1.1
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:19:08  APRIL 17, 2024"
+set_global_assignment -name LAST_QUARTUS_VERSION "23.1std.0 Lite Edition"
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 256
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name VERILOG_SHOW_LMF_MAPPING_MESSAGES ON
+set_global_assignment -name HDL_MESSAGE_LEVEL LEVEL2
+set_global_assignment -name SYNTH_MESSAGE_LEVEL HIGH
+set_global_assignment -name ENABLE_OCT_DONE OFF
+set_global_assignment -name EXTERNAL_FLASH_FALLBACK_ADDRESS 00000000
+set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
+set_global_assignment -name INTERNAL_FLASH_UPDATE_MODE "SINGLE IMAGE WITH ERAM"
+set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
+
+set_location_assignment PIN_AF14 -to clk
+set_location_assignment PIN_AB12 -to enable
+set_location_assignment PIN_AC12 -to nreset
+set_location_assignment PIN_V16 -to led[0]
+set_location_assignment PIN_W16 -to led[1]
+set_location_assignment PIN_V17 -to led[2]
+set_location_assignment PIN_V18 -to led[3]
+set_location_assignment PIN_W17 -to led[4]
+set_location_assignment PIN_W19 -to led[5]
+set_location_assignment PIN_Y19 -to led[6]
+set_location_assignment PIN_W20 -to led[7]
+
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/common_cells_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/jump_predictor/riscv_next_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/jump_predictor/riscv_next_strategy_random.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/jump_predictor/riscv_next_strategy_hardcoded.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/jump_predictor/riscv_next_strategy_compute_jump_ret.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/jump_predictor/riscv_next_strategy_compute_jump.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/jump_predictor/riscv_next_strategy_btb_counter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/jump_predictor/riscv_next_strategy_bhtret_counter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/jump_predictor/riscv_next_strategy_bht_counter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/jump_predictor/riscv_next_ret_table.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/jump_predictor/riscv_next_interfaces.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/jump_predictor/riscv_next_instr_decoder.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/jump_predictor/riscv_next_hist_counter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/jump_predictor/riscv_next_btb_counter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/jump_predictor/riscv_next_addr_predictor.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/top.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/dma_stream_channel.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/dma_multi_channel_scheduler.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/dma_desc_arbiter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/dma_axil_arbiter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/dma_apb_ctrl_logic.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/dma_apb_channel_arbiter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/dma_apb_channel.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/dma_apb_arbiter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/dma_apb.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/bridge_risc_dma.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/axil_wr_cha.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/axil_rd_cha.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/axil_if.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/axil_dma.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/async_fifo_mem.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/apb_tim.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/apb_switch.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/apb_slave2.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/apb_slave.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/dma/apb_leds.sv
+set_global_assignment -name VERILOG_FILE ../hw_src/axil/priority_encoder.v
+set_global_assignment -name VERILOG_FILE ../hw_src/axil/axil_ram.v
+set_global_assignment -name VERILOG_FILE ../hw_src/axil/axil_interconnect.v
+set_global_assignment -name VERILOG_FILE ../hw_src/axil/arbiter.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/top.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_top.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_status_manager.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_return_addr_stack.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_prog_mem.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_pipeline_stages.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_p_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_p_memory_access_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_p_mem_stage.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_p_mem_adapter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_p_instr_fetch.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_p_instr_decode.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_p_if_stage.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_p_if_prog_counter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_p_id_stage.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_p_id_imm_gen.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_p_id_control_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_p_execution_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_p_ex_stage.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_p_ex_jump_n_branches.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_p_ex_forwarding_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_p_ex_arithmetic_logic_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_mu_pc_skid_buffer.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_main_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_hazard_detection.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_csu_ras_logic.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_csu_ras_fsm.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_cache_access_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../hw_src/riscv_cache.sv
+set_global_assignment -name SYSTEMVERILOG_FILE top_wrapper.sv
+set_global_assignment -name HEX_FILE default_rom_init.hex
+set_global_assignment -name QIP_FILE PROGMEM_ROM.qip

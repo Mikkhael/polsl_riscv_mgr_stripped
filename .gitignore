@@ -1,0 +1,35 @@
+*.out
+*.log
+*.wlf
+sim_src/simout.csv
+sim_src/pipeline.html
+# sim_src/TESTS/pipelines/*.html
+# sim_src/TESTS/progmems/*.mem
+# sim_src/TESTS/c_obj/*.o
+# sim_src/TESTS/c_obj/*.bin
+# sim_src/TESTS/c_obj/*.elf
+# sim_src/TESTS/csvs/*.csv
+.VSCodeCounter/2023-08-09_00-25-51/details.md
+.VSCodeCounter/2023-08-09_00-25-51/diff-details.md
+.VSCodeCounter/2023-08-09_00-25-51/diff.csv
+.VSCodeCounter/2023-08-09_00-25-51/diff.md
+.VSCodeCounter/2023-08-09_00-25-51/diff.txt
+.VSCodeCounter/2023-08-09_00-25-51/results.csv
+.VSCodeCounter/2023-08-09_00-25-51/results.json
+.VSCodeCounter/2023-08-09_00-25-51/results.md
+.VSCodeCounter/2023-08-09_00-25-51/results.txt
+.VSCodeCounter/2023-08-11_21-41-00/details.md
+.VSCodeCounter/2023-08-11_21-41-00/diff-details.md
+.VSCodeCounter/2023-08-11_21-41-00/diff.csv
+.VSCodeCounter/2023-08-11_21-41-00/diff.md
+.VSCodeCounter/2023-08-11_21-41-00/diff.txt
+.VSCodeCounter/2023-08-11_21-41-00/results.csv
+.VSCodeCounter/2023-08-11_21-41-00/results.json
+.VSCodeCounter/2023-08-11_21-41-00/results.md
+.VSCodeCounter/2023-08-11_21-41-00/results.txt
+.vscode/settings.json
+.vscode/tasks.json
+.dvt/build.config.xml
+.dvt/default.build
+.dvt/default.build.auto.1
+.dvt/default.ls

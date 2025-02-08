@@ -1,0 +1,56 @@
+memory.sv                               - już nie jest używany
+riscv_cache_access_unit.sv              - usunięto niepotrzebny riscv_ca_memory_order_buffer (DFF którego wyjście nie było nigdzie używane)
+riscv_hazard_detection.sv               - Dodano stallowanie poprzez czekanie na ready i valid z AXI
+riscv_main_unit.sv                      - Dodano sygnały dotyczące stallowania i AXI
+riscv_p_if_prog_counter.sv              - usunął nieużywany i_valid_instr i usunął DFF'a, teraz zawsze jest read włączony (chyba że stalluje) (inkrementacja pc jest dalej jak było). read_instr_r jest teraz przez to nieużywany
+riscv_p_instr_fetch.sv                  - usunął i_valid_instr, podobnie jak w prog_counter
+riscv_p_mem_adapter.sv                  - zmienił nazwę "rd" na "mem_rd" i "mask" na "strb", oprucz tego chyba wszystko po staremu.
+riscv_p_mem_access_unit.sv              - Po prostu przepisane na AXI.
+riscv_p_register.sv                     - wyciągnął forwardowanie WB do osobnych sygnałów (rs1_data_c i rs2_data_c). Domyślnie wszystkie rejestry są teraz zerowane, a nie tylko zerowy. Dodał też taktyczny średnik xD
+riscv_pipeline_stages.sv                - Po prostu przerobione sygnały na AXI.
+riscv_prog_mem.sv                       - zwiększono pamięć do 4086 (z 264). Usunięto nieużywany sygnał debug
+riscv_top.sv                            - Dodano interfejs AXI i sygbały dotyczące memory podmieniono. Reszta najwidoczniej bez zmian (mogła się tylko kolejność pozmieniać)
+
+
+riscv_mu_pc_skid_buffer.sv             +- Nie jest naprawiony niedziałający STORE, trzeba bramkowanie enable zmienić -> jednak jest git, ponieważ zaczynamy z większym PC w IF
+riscv_p_ex_arithmetic_logic_unit.sv    +- Zmiany dotyczące naprawy forwardowania RS2 przy STORE nie zostały zaimplementowane, prawie na pewno nie naprawił tego nigdzie indziej -> dokładnie tak, musiałem poprawić
+riscv_p_id_control_unit.sv             +- zmieniono ALU_OP dla STORE z R1_IMM na R1_R2, trzeba przeanalizować co to robi dalej -> No ewidentnie źle robi, i tyle
+riscv_p_mem_stage.sv                   !- Chyba po prostu przepisane na AXI. TODO: CO ROBI "desc_c"??
+riscv_prog_mem.sv                      !- Sprawdzić czy komentarz w linijce 63 napewno jest prawdziwy, najlepiej na waveformach
+riscv_csu_ras_logic.sv                  - nic się nie zmieniło (a to źle, bo nie naprawiliście złego sprawdzenia przepełnienia RAS'a)
+
+
+
+
+W sumie nieużywane pliki:
+    riscv_stacking_unit.sv
+    riscv_su_arbiter.sv
+    riscv_su_ctrl_logic.sv
+
+
+
+Moje poprawki:
+
+    (28.02.2024 - 3:00)
+    + Moved common_cells_pkg.sv to top level
+    + Musiałem dodać makro "-mfcu=macro" do kompilacji, bo inaczej makra wewnątrz pkg nie propagowały na zewnątrz. Również dodano wildcardy do wszystkich sourców
+    + w "dma_apb_channel_arbiter.sv" nie były zdefiniowane 2 sygnały: "dma2mem_acs" i "mem2dma_acs" (dodałem dla nich wire'y)
+    + w "apb_tim.sv" zakomentowałem martwy (i niepoprawny) kod poza modułem
+    + usunąłem z pipeline_export:
+        - wszystko od memory
+        - instr_valid z IF
+        - (dodałem z powrotem debug_instr_c do riscv_prog_mem.sv i debug_skid_buffer_pc do riscv_mu_pc_skid_buffer.sv)
+        - zamieniłem w exporcie debug_rs1_data i debug_rs2_data na rs1_data_c i rs2_data_c (do podglądu aktualnie czytanych rejestrów, teraz będzie na podglądzie także forwardowany write)
+        - z memory access unit: riscv_mem_adapter__mask_data i i_rd_data, oraz read_c i write_c (z mem_stage)
+    - Muszę ogarnąć nowe połączenia dla top.sv, bo się kompletnie pozmieniały
+    - apb_slave2 oraz apb_tim są najwidoczniej TOP LEVEL ?? (czyli nieużyte nigdzie, pewnie dlatego w apb_tim było tyle błędów)
+
+    (29.02.2024 - 2:00)
+    + tylko dokończyłem analizowanie zmian w plikach źródłowych samego procka, nie wiem jedynie do końca czym jest "desc_c"
+
+    (03.03.2024 - 2:00)
+    + Dodałem z powrotem odpowiednie sygnały do pipelien_visualizer, dodałem też "stalled".
+    + Poprawiłem błędy związane ze STORE (alu_src i forwarding)
+    + tb i verify działają
+    + jakimś cudem nadpisuje się x0 (LOL, od zawsze się nadpisywał)
+    - trzeba polepszyć wizualizację stalled

@@ -1,0 +1,30 @@
+    MAX 10
+
+ 
+set_location_assignment PIN_L3 -to clk
+set_location_assignment PIN_B16 -to enable
+set_location_assignment PIN_B15 -to nreset
+set_location_assignment PIN_L16 -to seg[0]
+set_location_assignment PIN_J15 -to seg[1]
+set_location_assignment PIN_J16 -to seg[2]
+set_location_assignment PIN_H15 -to seg[3]
+set_location_assignment PIN_H16 -to seg[4]
+set_location_assignment PIN_G15 -to seg[5]
+set_location_assignment PIN_G16 -to seg[6]
+set_location_assignment PIN_F16 -to seg[7]
+
+
+    Cyclone V
+
+    
+set_location_assignment PIN_AF14 -to clk
+set_location_assignment PIN_AB12 -to enable
+set_location_assignment PIN_AC12 -to nreset
+set_location_assignment PIN_V16 -to led[0]
+set_location_assignment PIN_W16 -to led[1]
+set_location_assignment PIN_V17 -to led[2]
+set_location_assignment PIN_V18 -to led[3]
+set_location_assignment PIN_W17 -to led[4]
+set_location_assignment PIN_W19 -to led[5]
+set_location_assignment PIN_Y19 -to led[6]
+set_location_assignment PIN_W20 -to led[7]
