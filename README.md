@@ -5,6 +5,12 @@ Alternatively, if you want, you can contact me privately, so that I can send you
 
 **A lot of my work went into not only creating the branch predictor, but into debugging the existing RISC-V project.** Because of the licensing, I am unable to show these changes here :(
 
+## Prerequisites for building and running locally
+- QuestaSim
+- RISC-V gcc toolchain (e.g. https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack)
+- NodeJS
+- Make
+
 ## Project Structure
 
 - `./hw_src/jump_predictor/` - all implemented submodules and variants of the branch predictor in SystemVerilog, configurable via macros
